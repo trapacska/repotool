@@ -140,14 +140,16 @@ func updateRepos() error {
 			"head":  "git-url-update",
 			"base":  "master",
 		}); err != nil {
-			return err
+			log.Errorf("%s", err)
+			continue
 		}
 
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", repoOwner(newURL), repoName(newURL))
 
 		req, err := http.NewRequest(http.MethodPost, url, &b)
 		if err != nil {
-			return err
+			log.Errorf("%s", err)
+			continue
 		}
 
 		req.Header.Add("Authorization", "token "+authToken)
@@ -161,14 +163,16 @@ func updateRepos() error {
 			if dumped, err := httputil.DumpResponse(resp, true); err == nil {
 				fmt.Println(string(dumped))
 			}
-			return err
+			log.Errorf("%s", err)
+			continue
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode > 210 {
 			if dumped, err := httputil.DumpResponse(resp, true); err == nil {
 				fmt.Println(string(dumped))
 			}
-			return fmt.Errorf("non successful status code")
+			log.Errorf("%s", fmt.Errorf("non successful status code"))
+			continue
 		}
 
 		fmt.Println("OK", tempDir)
