@@ -14,10 +14,8 @@ import (
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/pkg/errors"
-
 	"github.com/bitrise-io/go-utils/sliceutil"
-
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/trapacska/repotool/storage"
 )
@@ -100,6 +98,15 @@ func updateRepos() error {
 			if info.IsDir() && info.Name() == ".git" {
 				return filepath.SkipDir
 			}
+			if info.IsDir() && info.Name() == "vendor" {
+				return filepath.SkipDir
+			}
+			if !info.IsDir() && info.Name() == "Gopkg.toml" {
+				return nil
+			}
+			if !info.IsDir() && info.Name() == "Gopkg.lock" {
+				return nil
+			}
 
 			if info.IsDir() {
 				return nil
@@ -167,7 +174,7 @@ func updateRepos() error {
 			continue
 		}
 
-		if resp.StatusCode < 200 || resp.StatusCode > 210 {
+		if resp.StatusCode != http.StatusCreated {
 			if dumped, err := httputil.DumpResponse(resp, true); err == nil {
 				fmt.Println(string(dumped))
 			}
@@ -182,7 +189,6 @@ func updateRepos() error {
 			table.UpdatedRepositories = append(table.UpdatedRepositories, newURL)
 		}); err != nil {
 			log.Errorf("%s", err)
-			continue
 		}
 	}
 	return nil

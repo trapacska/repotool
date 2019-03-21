@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/spf13/cobra"
@@ -92,7 +94,7 @@ main:
 			continue
 		}
 
-		if resp.StatusCode < 200 || resp.StatusCode > 210 {
+		if resp.StatusCode != http.StatusAccepted {
 			if dumped, err := httputil.DumpResponse(resp, true); err == nil {
 				fmt.Println(string(dumped))
 			}
@@ -107,10 +109,27 @@ main:
 			table.TransferredRepositories = append(table.TransferredRepositories, storage.Repo{OriginalURL: repoURL, TargetOrg: org})
 		}); err != nil {
 			log.Errorf("%s", err)
-			continue
 		}
 	}
 	return nil
+}
+
+func parseRepoList(file, repo string) (repos []string, err error) {
+	if s := strings.TrimSpace(repo); len(s) > 0 {
+		repos = append(repos, s)
+		return
+	}
+
+	fileData, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	for _, fileLine := range strings.Split(string(fileData), "\n") {
+		if s := strings.TrimSpace(fileLine); len(s) > 0 {
+			repos = append(repos, s)
+		}
+	}
+	return repos, nil
 }
 
 func init() {
